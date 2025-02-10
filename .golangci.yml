@@ -1,0 +1,29 @@
+linters-settings:
+  gocyclo:
+    min-complexity: 12
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  misspell:
+    locale: US
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - revive
+
+run:
+  timeout: 10m
+
+issues:
+  exclude-files:
+    - ".*_test.go"
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - govet
