@@ -1,3 +1,3 @@
-module github.com/K8Trust/authtokencookie
+module github.com/K8Trust/authcookie
 
 go 1.22

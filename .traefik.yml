@@ -1,6 +1,6 @@
-displayName: authtokencookie
+displayName: authcookie
 type: middleware
-import: github.com/K8Trust/authtokencookie
+import: github.com/K8Trust/authcookie
 summary: 'A Traefik middleware plugin that performs authentication and sets a secure cookie with the access token'
 iconPath: .assets/icon.png
 testData:

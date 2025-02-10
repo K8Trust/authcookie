@@ -8,7 +8,7 @@ Once loaded, these plugins behave like statically compiled middlewares. Their in
 
 ## Static Configuration
 
-In the examples below, we add the authtokencookie plugin in the Traefik Static Configuration:
+In the examples below, we add the authcookie plugin in the Traefik Static Configuration:
 
 ### File (YAML)
 
@@ -19,8 +19,8 @@ pilot:
 
 experimental:
   plugins:
-    authtokencookie:
-      moduleName: "github.com/k8trust/authtokencookie"
+    authcookie:
+      moduleName: "github.com/k8trust/authcookie"
       version: "v1.0.0"
 ```
 
@@ -28,13 +28,13 @@ experimental:
 
 ```bash
 --entryPoints.web.address=:80 \
---experimental.plugins.authtokencookie.modulename=github.com/k8trust/authtokencookie \
---experimental.plugins.authtokencookie.version=v1.0.0
+--experimental.plugins.authcookie.modulename=github.com/k8trust/authcookie \
+--experimental.plugins.authcookie.version=v1.0.0
 ```
 
 ## Dynamic Configuration
 
-Some plugins will need to be configured by adding a dynamic configuration. For the authtokencookie plugin, for example:
+Some plugins will need to be configured by adding a dynamic configuration. For the authcookie plugin, for example:
 
 ### File (YAML)
 
@@ -44,7 +44,7 @@ http:
   middlewares:
     auth-token:
       plugin:
-        authtokencookie:
+        authcookie:
           conf: "http://internal-auth.example.local/auth"
           timeout: "30s"
 ```
@@ -92,7 +92,7 @@ The plugins must be placed in `./plugins-local` directory, which should be in th
     └── src
         └── github.com
             └── k8trust
-                └── authtokencookie
+                └── authcookie
                     ├── plugin.go
                     ├── plugin_test.go
                     ├── go.mod
@@ -107,7 +107,7 @@ The plugins must be placed in `./plugins-local` directory, which should be in th
 
 ```bash
 --entryPoints.web.address=:80 \
---experimental.localPlugins.authtokencookie.modulename=github.com/k8trust/authtokencookie
+--experimental.localPlugins.authcookie.modulename=github.com/k8trust/authcookie
 ```
 
 ## Development
@@ -169,7 +169,7 @@ make lint
 ### Docker Build
 
 ```bash
-docker build -t authtokencookie .
+docker build -t authcookie .
 ```
 
 ## Security Considerations

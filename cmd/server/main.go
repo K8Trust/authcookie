@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	authtokencookie "github.com/K8Trust/authtokencookie"
+	authcookie "github.com/K8Trust/authcookie"
 )
 
 func main() {
@@ -17,9 +17,9 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
-	cfg := authtokencookie.CreateConfig()
+	cfg := authcookie.CreateConfig()
 
-	handler, err := authtokencookie.New(context.Background(), nextHandler, cfg, "auth-cookie")
+	handler, err := authcookie.New(context.Background(), nextHandler, cfg, "auth-cookie")
 	if err != nil {
 		logger.Fatalf("Failed to create plugin: %v", err)
 	}

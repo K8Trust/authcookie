@@ -1,4 +1,4 @@
-package authtokencookie
+package authcookie
 
 import (
 	"context"

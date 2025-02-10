@@ -1,4 +1,4 @@
-package authtokencookie_test
+package authcookie_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	authtokencookie "github.com/K8Trust/authtokencookie"
+	authcookie "github.com/K8Trust/authcookie"
 )
 
 // fakeAuthServer creates a test HTTP server simulating the auth server.
@@ -21,7 +21,7 @@ func fakeAuthServer(t *testing.T, status int, token string) *httptest.Server {
 		}
 		http.SetCookie(w, cookie)
 		w.WriteHeader(status)
-		resp := authtokencookie.AuthResponse{AccessToken: token}
+		resp := authcookie.AuthResponse{AccessToken: token}
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
 			t.Fatalf("could not encode response: %v", err)
 		}
@@ -38,12 +38,12 @@ func TestAuthPluginSuccess(t *testing.T) {
 		w.Write([]byte("OK"))
 	})
 
-	cfg := &authtokencookie.Config{
+	cfg := &authcookie.Config{
 		AuthEndpoint: fakeServer.URL,
-		Timeout:      authtokencookie.Timeout,
+		Timeout:      authcookie.Timeout,
 	}
 
-	plugin, err := authtokencookie.New(context.Background(), nextHandler, cfg, "auth_cookie")
+	plugin, err := authcookie.New(context.Background(), nextHandler, cfg, "auth_cookie")
 	if err != nil {
 		t.Fatalf("failed to create plugin: %v", err)
 	}
@@ -85,9 +85,9 @@ func TestAuthPluginUnauthorized(t *testing.T) {
 		t.Fatal("next handler should not be called for unauthorized requests")
 	})
 
-	cfg := authtokencookie.CreateConfig()
+	cfg := authcookie.CreateConfig()
 
-	plugin, err := authtokencookie.New(context.Background(), nextHandler, cfg, "auth_cookie")
+	plugin, err := authcookie.New(context.Background(), nextHandler, cfg, "auth_cookie")
 	if err != nil {
 		t.Fatalf("failed to create plugin: %v", err)
 	}
