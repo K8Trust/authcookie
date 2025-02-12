@@ -12,7 +12,10 @@ import (
 
 // fakeAuthServer creates a test HTTP server simulating the auth server.
 func fakeAuthServer(t *testing.T, status int, token string) *httptest.Server {
-	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Log incoming request headers for debugging
+		t.Logf("Auth server received headers: %v", r.Header)
+		
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
 		resp := authcookie.AuthResponse{AccessToken: token}
@@ -27,8 +30,11 @@ func TestAuthPluginSuccess(t *testing.T) {
 	fakeServer := fakeAuthServer(t, http.StatusOK, "test-token")
 	defer fakeServer.Close()
 
-	// Next handler that simply writes OK.
-	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	var capturedRequest *http.Request
+	
+	// Next handler that captures the request for verification
+	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedRequest = r.Clone(r.Context()) // Clone the request to inspect it
 		w.Write([]byte("OK"))
 	})
 
@@ -48,13 +54,28 @@ func TestAuthPluginSuccess(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	plugin.ServeHTTP(rec, req)
-	res := rec.Result()
-	defer res.Body.Close()
+	
+	if capturedRequest == nil {
+		t.Fatal("next handler was not called")
+	}
 
-	cookieHeader := res.Header.Get("cookie")
-	expectedHeader := "token=test-token;"
-	if cookieHeader != expectedHeader {
-		t.Errorf("expected cookie header to be %q, got %q", expectedHeader, cookieHeader)
+	// Check Cookie header
+	cookieHeader := capturedRequest.Header.Get("Cookie")
+	expectedCookie := "token=test-token;"
+	if cookieHeader != expectedCookie {
+		t.Errorf("expected Cookie header to be %q, got %q", expectedCookie, cookieHeader)
+	}
+
+	// Check Authorization header
+	authHeader := capturedRequest.Header.Get("Authorization")
+	expectedAuth := "Bearer test-token"
+	if authHeader != expectedAuth {
+		t.Errorf("expected Authorization header to be %q, got %q", expectedAuth, authHeader)
+	}
+
+	// Verify response status
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status OK, got %v", rec.Code)
 	}
 }
 
