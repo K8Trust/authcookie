@@ -68,22 +68,8 @@ func maskSensitive(s string) string {
 	return s[:4] + "****"
 }
 
-// sameSiteToString converts the SameSite constant to a human-readable string.
-func sameSiteToString(s http.SameSite) string {
-	switch s {
-	case http.SameSiteLaxMode:
-		return "Lax"
-	case http.SameSiteStrictMode:
-		return "Strict"
-	case http.SameSiteNoneMode:
-		return "None"
-	default:
-		return "DefaultMode"
-	}
-}
-
 // ServeHTTP processes incoming requests.
-// It checks for required headers, calls the auth endpoint, sets a cookie, and passes the request to the next handler.
+// It checks for required headers, calls the auth endpoint, sets a cookie header, and passes the request to the next handler.
 func (a *AuthPlugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	apiKey := req.Header.Get("x-api-key")
 	tenant := req.Header.Get("x-account")
@@ -145,23 +131,10 @@ func (a *AuthPlugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	cookie := &http.Cookie{
-		Name:     "token",
-		Value:    authResp.AccessToken,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-	}
-	http.SetCookie(rw, cookie)
+	// Add a new header named 'cookie' with the token
+	rw.Header().Add("cookie", fmt.Sprintf("token=%s;", authResp.AccessToken))
 
-	a.logger.Printf("Setting cookie: %s=%s, HttpOnly: %v, Secure: %v, SameSite: %s",
-		cookie.Name,
-		maskSensitive(cookie.Value),
-		cookie.HttpOnly,
-		cookie.Secure,
-		sameSiteToString(cookie.SameSite))
-
+	a.logger.Printf("Setting cookie header: token=%s", maskSensitive(authResp.AccessToken))
 	a.logger.Printf("Auth successful for account: %s, passing request to next handler", tenant)
 	a.next.ServeHTTP(rw, req)
 }

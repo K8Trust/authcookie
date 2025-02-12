@@ -14,12 +14,6 @@ import (
 func fakeAuthServer(t *testing.T, status int, token string) *httptest.Server {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		// Set cookie before writing status
-		cookie := &http.Cookie{
-			Name:  "token",
-			Value: token,
-		}
-		http.SetCookie(w, cookie)
 		w.WriteHeader(status)
 		resp := authcookie.AuthResponse{AccessToken: token}
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
@@ -57,25 +51,10 @@ func TestAuthPluginSuccess(t *testing.T) {
 	res := rec.Result()
 	defer res.Body.Close()
 
-	cookies := res.Cookies()
-	if len(cookies) == 0 {
-		t.Fatal("expected a cookie to be set in the response")
-	}
-
-	found := false
-	for _, cookie := range cookies {
-		if cookie.Name == "token" && cookie.Value == "test-token" {
-			found = true
-			if !cookie.HttpOnly {
-				t.Error("expected cookie to be HttpOnly")
-			}
-			if !cookie.Secure {
-				t.Error("expected cookie to be Secure")
-			}
-		}
-	}
-	if !found {
-		t.Errorf("expected cookie with token 'test-token' not found")
+	cookieHeader := res.Header.Get("cookie")
+	expectedHeader := "token=test-token;"
+	if cookieHeader != expectedHeader {
+		t.Errorf("expected cookie header to be %q, got %q", expectedHeader, cookieHeader)
 	}
 }
 
