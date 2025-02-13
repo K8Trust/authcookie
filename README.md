@@ -1,22 +1,12 @@
 # Auth Token Cookie Plugin for Traefik
 
-A Traefik middleware plugin that authenticates requests using an internal authentication service and sets a secure cookie containing the access token.
+A Traefik middleware plugin that authenticates requests using an internal authentication service and sets a token in the cookie header.
 
-## Middleware Plugins
+## Configuration
 
-Once loaded, these plugins behave like statically compiled middlewares. Their instantiation and behavior are driven by the dynamic configuration.
-
-## Static Configuration
-
-In the examples below, we add the authcookie plugin in the Traefik Static Configuration:
-
-### File (YAML)
+### Static Configuration (traefik.yml)
 
 ```yaml
-# Static configuration
-pilot:
-  token: "xxxx"
-
 experimental:
   plugins:
     authcookie:
@@ -24,19 +14,7 @@ experimental:
       version: "v1.0.0"
 ```
 
-### CLI
-
-```bash
---entryPoints.web.address=:80 \
---experimental.plugins.authcookie.modulename=github.com/k8trust/authcookie \
---experimental.plugins.authcookie.version=v1.0.0
-```
-
-## Dynamic Configuration
-
-Some plugins will need to be configured by adding a dynamic configuration. For the authcookie plugin, for example:
-
-### File (YAML)
+### Dynamic Configuration
 
 ```yaml
 # Dynamic configuration
@@ -45,16 +23,16 @@ http:
     auth-token:
       plugin:
         authcookie:
-          conf: "http://internal-auth.example.local/auth"
-          timeout: "30s"
+          authEndpoint: "http://internal-auth.example.local/auth"
+          timeout: "5s"
 ```
 
 ## Plugin Configuration Options
 
-| Option   | Type     | Default | Description                                    |
-|----------|----------|---------|------------------------------------------------|
-| conf     | String   | ""      | Full URL of the authentication service         |
-| timeout  | Duration | "30s"   | Timeout for authentication service requests    |
+| Option       | Type     | Default                                   | Description                             |
+|-------------|----------|-------------------------------------------|-----------------------------------------|
+| authEndpoint | String   | "http://localhost:9000/test/auth/api-key" | Full URL of the authentication service  |
+| timeout     | Duration | "5s"                                      | Timeout for authentication requests     |
 
 ## Required Headers
 
@@ -63,124 +41,52 @@ The plugin expects the following headers in incoming requests:
 - `x-api-key`: API key for authentication
 - `x-account`: Tenant identifier
 
-## Usage Example
-
-```yaml
-# traefik.yml
-http:
-  routers:
-    my-router:
-      rule: "Host(`example.com`)"
-      middlewares:
-        - auth-token
-      service: my-service
-```
-
-## Local Mode
-
-Traefik also offers a local mode that can be used for:
-
-- Using private plugins that are not hosted on GitHub
-- Testing the plugins during their development
-
-To use a plugin in local mode, the Traefik static configuration must define the module name (as is usual for Go packages) and a path to a Go workspace, which can be the local GOPATH or any directory.
-
-The plugins must be placed in `./plugins-local` directory, which should be in the working directory of the process running the Traefik binary. The source code of the plugin should be organized as follows:
-
-```plaintext
-./plugins-local/
-    └── src
-        └── github.com
-            └── k8trust
-                └── authcookie
-                    ├── plugin.go
-                    ├── plugin_test.go
-                    ├── go.mod
-                    ├── go.sum
-                    ├── LICENSE
-                    ├── Makefile
-                    ├── readme.md
-                    └── vendor/
-```
-
-### CLI
-
-```bash
---entryPoints.web.address=:80 \
---experimental.localPlugins.authcookie.modulename=github.com/k8trust/authcookie
-```
-
 ## Development
 
-### Working with Project Files
-
-The repository includes several important files for development and testing:
-
-- **`main.go`**: The core plugin implementation.
-- **`main.test.go`**: Contains unit tests for validating the authentication logic.
-- **`auth_server.go`**: A mock authentication server for local testing.
-- **`go.mod`**: Dependency management file for the Go module.
-- **`.golangci.yml`**: Linter configuration.
-- **`.traefik.yml`**: Configuration file for Traefik integration.
-
-### Running the Plugin Locally
-
-1. **Start the Mock Authentication Server**
-
-   If you need a test auth server, run:
-   ```sh
-   go run auth_server.go
-   ```
-   This will start an authentication server at `http://localhost:9000/test/auth/api-key`.
-
-2. **Run the Middleware Plugin**
-   ```sh
-   go run main.go
-   ```
-   This will start the middleware on `http://localhost:8080`.
-
-3. **Test the Middleware**
-   ```sh
-   curl -v -H "x-api-key: test123" -H "x-account: test" http://localhost:8080
-   ```
-   Expected response:
-   ```json
-   {"token": "mocked-token"}
-   ```
-
-### Building
-
-```bash
-make build
+### Project Structure
+```
+.
+├── Dockerfile
+├── Makefile
+├── README.md
+├── authcookie.go          # Main plugin implementation
+├── authcookie_test.go     # Plugin tests
+├── cmd
+│   └── server
+│       └── main.go        # Standalone server for testing
+├── fake_auth_server.go    # Mock auth server for testing
+└── go.mod
 ```
 
-### Testing
+### Local Testing
 
+1. Run the fake auth server:
 ```bash
-make test
+go run fake_auth_server.go
 ```
 
-### Linting
-
+2. Run the test server:
 ```bash
-make lint
+go run cmd/server/main.go
 ```
 
-### Docker Build
-
+3. Test with curl:
 ```bash
-docker build -t authcookie .
+# Test with valid headers
+curl -v -H "x-api-key: test-key" -H "x-account: test-account" http://localhost:8080
+
+# Test without headers (should get unauthorized)
+curl -v http://localhost:8080
 ```
 
-## Security Considerations
-
-- The plugin sets cookies with both `HttpOnly` and `Secure` flags
-- Authentication is performed over an internal network only
-- API keys and tokens are handled securely
+### Running Tests
+```bash
+go test -v ./...
+```
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+MIT License
 
 ## Contributing
 
@@ -189,5 +95,5 @@ Contributions are welcome! Please submit a pull request or open an issue for dis
 ### Contributors
 
 - [Yousef Shamshoum](https://github.com/yousef-shamshoum)
-- [Shay](https://github.com/shay)
+- [Shay](https://github.com/shayktrust)
 
