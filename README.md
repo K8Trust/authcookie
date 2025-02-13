@@ -2,20 +2,25 @@
 
 A Traefik middleware plugin that authenticates requests using an internal authentication service and sets a token in the cookie header.
 
+## Features
+- Kubernetes-native authentication service integration
+- Secure token handling
+- Configurable endpoint support
+- Header-based authentication
+
 ## Configuration
 
-### Static Configuration (traefik.yml)
-
+### Static Configuration
 ```yaml
+# traefik.yml
 experimental:
   plugins:
     authcookie:
       moduleName: "github.com/k8trust/authcookie"
-      version: "v1.0.4"
+      version: "v1.0.5"
 ```
 
 ### Dynamic Configuration
-
 ```yaml
 # Dynamic configuration
 http:
@@ -23,59 +28,60 @@ http:
     auth-token:
       plugin:
         authcookie:
-          authEndpoint: "http://internal-auth.example.local/auth"
-          timeout: "5s"
+          authEndpoint: "http://k8s-service.namespace.svc.cluster.local/central/auth" 
 ```
 
-## Plugin Configuration Options
+## Configuration Options
 
-| Option       | Type     | Default                                   | Description                             |
-|-------------|----------|-------------------------------------------|-----------------------------------------|
-| authEndpoint | String   | "http://localhost:9000/test/auth/api-key" | Full URL of the authentication service  |
-| timeout     | Duration | "5s"                                      | Timeout for authentication requests     |
+| Option      | Type   | Default | Description |
+|-------------|--------|---------|-------------|
+| authEndpoint | String | `http://localhost:9000/test/auth/api-key` | Full URL of the Kubernetes authentication service |
 
-## Required Headers
+## Authentication Headers
 
-The plugin expects the following headers in incoming requests:
-
-- `x-api-key`: API key for authentication
-- `x-account`: Tenant identifier
+| Header | Description |
+|--------|-------------|
+| `x-api-key` | API key for authentication |
+| `x-account` | Tenant identifier |
 
 ## Development
 
 ### Project Structure
 ```
 .
-├── Dockerfile
-├── Makefile
-├── README.md
-├── authcookie.go          # Main plugin implementation
-├── authcookie_test.go     # Plugin tests
-├── cmd
-│   └── server
-│       └── main.go        # Standalone server for testing
-├── fake_auth_server.go    # Mock auth server for testing
-└── go.mod
+├── Dockerfile             # Container build configuration
+├── Makefile              # Build automation
+├── README.md             # Documentation
+├── authcookie.go         # Main plugin implementation
+├── authcookie_test.go    # Plugin tests
+├── cmd/
+│   └── server/
+│       └── main.go       # Standalone server for testing
+├── fake_auth_server.go   # Mock auth server for testing
+└── go.mod                # Go module definition
 ```
 
-### Local Testing
+### Local Development
 
-1. Run the fake auth server:
+#### 1. Start the Mock Auth Server
 ```bash
 go run fake_auth_server.go
 ```
 
-2. Run the test server:
+#### 2. Run the Test Server
 ```bash
 go run cmd/server/main.go
 ```
 
-3. Test with curl:
+#### 3. Test the Endpoints
 ```bash
-# Test with valid headers
-curl -v -H "x-api-key: test-key" -H "x-account: test-account" http://localhost:8080
+# Test with authentication headers
+curl -v \
+  -H "x-api-key: test-key" \
+  -H "x-account: test-account" \
+  http://localhost:8080
 
-# Test without headers (should get unauthorized)
+# Test unauthorized access
 curl -v http://localhost:8080
 ```
 
@@ -84,16 +90,14 @@ curl -v http://localhost:8080
 go test -v ./...
 ```
 
-## License
-
-MIT License
-
 ## Contributing
 
-Contributions are welcome! Please submit a pull request or open an issue for discussion.
+We welcome contributions! Please feel free to submit a Pull Request.
 
 ### Contributors
-
 - [Yousef Shamshoum](https://github.com/yousef-shamshoum)
 - [Shay](https://github.com/shayktrust)
 
+## License
+
+MIT License
