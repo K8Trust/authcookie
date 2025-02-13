@@ -11,7 +11,7 @@ experimental:
   plugins:
     authcookie:
       moduleName: "github.com/k8trust/authcookie"
-      version: "v1.0.0"
+      version: "v1.0.4"
 ```
 
 ### Dynamic Configuration
